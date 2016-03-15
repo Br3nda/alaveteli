@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '3.2.22.2'
 
-gem 'pg', '~> 0.17.1'
+gem 'pg', '~> 0.18.1'
 
 # New gem releases aren't being done. master is newer and supports Rails > 3.0
 gem 'acts_as_versioned', :git => 'https://github.com/technoweenie/acts_as_versioned.git', :ref => '63b1fc8529d028'
@@ -53,6 +53,12 @@ gem 'routing-filter', '~> 0.3.1'
 gem 'unicode', '~> 0.4.4'
 gem 'unidecoder', '~> 1.1.2'
 
+# Skylight monitoring
+gem 'skylight'
+
+# Raygun for exception reporting
+gem 'raygun4ruby'
+
 group :assets do
   gem 'bootstrap-sass', '~> 2.3.1.2'
   gem 'sass-rails', '~> 3.2.3'
@@ -64,6 +70,7 @@ end
 
 group :production do
   gem 'newrelic_rpm'
+  gem 'unicorn-rails', '~> 2.2.0'
 end
 
 group :test do
@@ -78,7 +85,6 @@ group :test, :development do
   gem 'pry', '~> 0.10.3'
   gem 'rspec-activemodel-mocks', '~> 1.0.1'
   gem 'rspec-rails', '3.2.0'
-  gem 'test-unit', '~> 3.0'
   gem 'spork-rails', '~> 3.2.1'
   gem 'pry-nav', '~> 0.2.4'
 end
