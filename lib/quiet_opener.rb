@@ -5,9 +5,9 @@ if RUBY_VERSION.to_f < 2.0
   require 'net/http/local'
 end
 
-def quietly_try_to_open(url)
+def quietly_try_to_open(url, timeout=60)
   begin
-    result = open(url).read.strip
+    result = open(url, :read_timeout => timeout).read.strip
   rescue OpenURI::HTTPError,
       SocketError,
       Errno::ETIMEDOUT,
@@ -17,8 +17,11 @@ def quietly_try_to_open(url)
       Timeout::Error => exception
     e = Exception.new("Unable to open third-party URL #{url}: #{exception.message}")
     e.set_backtrace(exception.backtrace)
-    if !AlaveteliConfiguration.exception_notifications_from.blank? && !AlaveteliConfiguration.exception_notifications_to.blank?
-      ExceptionNotifier::Notifier.exception_notification(request.env, e).deliver
+    # Send a notification if in a request context
+    if !AlaveteliConfiguration.exception_notifications_from.blank? &&
+       !AlaveteliConfiguration.exception_notifications_to.blank? &&
+       defined?(request)
+      ExceptionNotifier.notify_exception(e, :env => request.env)
     end
     Rails.logger.warn(e.message)
     result = ""

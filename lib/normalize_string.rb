@@ -1,6 +1,7 @@
 # -*- encoding : utf-8 -*-
 require 'iconv' unless String.method_defined?(:encode)
 require 'charlock_holmes'
+require "net/imap"
 
 class EncodingNormalizationError < StandardError
 end
@@ -10,9 +11,11 @@ def normalize_string_to_utf8(s, suggested_character_encoding=nil)
   # Make a list of encodings to try:
   to_try = []
 
-  guessed_encoding = CharlockHolmes::EncodingDetector.detect(s)[:encoding]
-  guessed_encoding ||= ''
-
+  guessed_encoding = if CharlockHolmes::EncodingDetector.detect(s).blank?
+    ''
+  else
+    CharlockHolmes::EncodingDetector.detect(s)[:encoding]
+  end
   # It's reasonably common for windows-1252 text to be mislabelled
   # as ISO-8859-1, so try that first if charlock_holmes guessed
   # that.  However, it can also easily misidentify UTF-8 strings as
@@ -25,13 +28,18 @@ def normalize_string_to_utf8(s, suggested_character_encoding=nil)
 
   to_try.each do |from_encoding|
     if String.method_defined?(:encode)
-      begin
-        s.force_encoding from_encoding
-        return s.encode('UTF-8') if s.valid_encoding?
-      rescue ArgumentError, Encoding::UndefinedConversionError
-        # We get this is there are invalid bytes when
-        # interpreted as from_encoding at the point of
-        # the encode('UTF-8'); move onto the next one...
+
+      if from_encoding == 'utf-7'
+        return Net::IMAP.decode_utf7(s)
+      else
+        begin
+          s.force_encoding from_encoding
+          return s.encode('UTF-8') if s.valid_encoding?
+        rescue ArgumentError, Encoding::UndefinedConversionError
+          # We get this is there are invalid bytes when
+          # interpreted as from_encoding at the point of
+          # the encode('UTF-8'); move onto the next one...
+        end
       end
     else
       begin
